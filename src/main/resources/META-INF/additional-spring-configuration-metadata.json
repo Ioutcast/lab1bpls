@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "secret.key",
+      "type": "java.lang.String",
+      "description": "Description for secret.key.",
+      "defaultValue": "eyJhbGciOiJIUzUxMiIsInR5cCI6ImVld2c0NTNuamtlckdFUmxeJiooM25qc2RpZjtydCJ9"
+    }
+  ]
+}
