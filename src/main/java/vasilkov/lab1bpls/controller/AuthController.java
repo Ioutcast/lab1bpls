@@ -3,6 +3,10 @@ package vasilkov.lab1bpls.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vasilkov.lab1bpls.model.AuthenticationRequest;
+import vasilkov.lab1bpls.model.AuthenticationResponse;
+import vasilkov.lab1bpls.model.MessageResponse;
+import vasilkov.lab1bpls.model.RegisterRequest;
 import vasilkov.lab1bpls.service.AuthenticationService;
 
 @CrossOrigin("*")
@@ -13,16 +17,15 @@ public class AuthController {
 
     private final AuthenticationService service;
 
-    //todo переписать
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
 
-        return ResponseEntity.ok(service.register(request));
-
+    @PostMapping("/signup")
+    public ResponseEntity<MessageResponse> register(@RequestBody RegisterRequest request) {
+        service.register(request);
+        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
-    //todo переписать
-    @PostMapping("/authenticate")
+
+    @PostMapping("/signin")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }

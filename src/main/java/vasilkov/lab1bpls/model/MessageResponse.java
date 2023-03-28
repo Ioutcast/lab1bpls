@@ -1,4 +1,4 @@
-package vasilkov.lab1bpls.controller;
+package vasilkov.lab1bpls.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
+public class MessageResponse {
 
-    private String token;
+    private String message;
+
 }

@@ -1,7 +1,6 @@
 package vasilkov.lab1bpls.security.config;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,7 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import vasilkov.lab1bpls.repository.UserRepository;
 
-@EnableConfigurationProperties
+
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationConfig {

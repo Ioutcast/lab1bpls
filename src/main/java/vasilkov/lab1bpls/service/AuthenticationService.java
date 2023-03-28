@@ -3,14 +3,21 @@ package vasilkov.lab1bpls.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import vasilkov.lab1bpls.controller.AuthenticationRequest;
-import vasilkov.lab1bpls.controller.AuthenticationResponse;
-import vasilkov.lab1bpls.controller.RegisterRequest;
 import vasilkov.lab1bpls.entity.Role;
+import vasilkov.lab1bpls.entity.Token;
+import vasilkov.lab1bpls.entity.TokenType;
 import vasilkov.lab1bpls.entity.User;
+import vasilkov.lab1bpls.model.AuthenticationRequest;
+import vasilkov.lab1bpls.model.AuthenticationResponse;
+import vasilkov.lab1bpls.model.RegisterRequest;
+import vasilkov.lab1bpls.repository.TokenRepository;
 import vasilkov.lab1bpls.repository.UserRepository;
+import vasilkov.lab1bpls.security.JwtService;
+
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,21 +27,18 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final TokenRepository tokenRepository;
 
 
-    public AuthenticationResponse register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         var user = User.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
+                .role(Role.ROLE_USER)
                 .build();
         repository.save(user);
-        var jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -46,10 +50,40 @@ public class AuthenticationService {
         );
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
+
         var jwtToken = jwtService.generateToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .id(user.getId())
+                .roles(user.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList()))
+                .username(user.getUsername())
+                .type(TokenType.BEARER.toString())
                 .build();
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .expired(false)
+                .revoked(false)
+                .build();
+        tokenRepository.save(token);
+    }
+
+    private void revokeAllUserTokens(User user) {
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        if (validUserTokens.isEmpty())
+            return;
+        validUserTokens.forEach(token -> {
+            token.setExpired(true);
+            token.setRevoked(true);
+        });
+        tokenRepository.saveAll(validUserTokens);
     }
 
 }
