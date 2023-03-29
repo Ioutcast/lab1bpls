@@ -1,35 +1,36 @@
 package vasilkov.lab1bpls.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import lombok.AllArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import vasilkov.lab1bpls.entity.Model;
 import vasilkov.lab1bpls.entity.Order;
+import vasilkov.lab1bpls.entity.Product;
 import vasilkov.lab1bpls.entity.User;
+import vasilkov.lab1bpls.exception.ResourceNotFoundException;
 import vasilkov.lab1bpls.model.MessageResponse;
 import vasilkov.lab1bpls.model.OrderRequest;
-import vasilkov.lab1bpls.repository.BrandRepository;
-import vasilkov.lab1bpls.repository.ModelRepository;
-import vasilkov.lab1bpls.repository.OrderRepository;
-import vasilkov.lab1bpls.repository.UserRepository;
+import vasilkov.lab1bpls.repository.*;
+import vasilkov.lab1bpls.specifications.OrderWithBrandName;
+import vasilkov.lab1bpls.specifications.OrderWithCityName;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
+@AllArgsConstructor
 public class OrderService {
-    @Autowired
+
     UserRepository userRepository;
-
-    @Autowired
     BrandRepository brandRepository;
-
-    @Autowired
     ModelRepository modelRepository;
-
-    @Autowired
     OrderRepository orderRepository;
+    ProductRepository productRepository;
 
-    public MessageResponse save(OrderRequest orderRequestModel) throws ResourceNotFoundException {
+
+    public MessageResponse save(OrderRequest orderRequestModel) {
         Order order = new Order();
         if (orderRequestModel.getDescription() != null) order.setDescription(orderRequestModel.getDescription());
         if (orderRequestModel.getColor() != null) order.setColor(orderRequestModel.getColor());
@@ -53,13 +54,32 @@ public class OrderService {
         }
         User user = userRepository.findUserByEmail(((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Error: User Not Found"));
-        //todo sop
+
         user.getOrders().add(order);
+        order.setUser(user);
 
         userRepository.save(user);
 
         return (new MessageResponse("order registered successfully!"));
 
+    }
+
+    public MessageResponse findAndSave(Integer id) {
+        //todo переписать
+        Product product = productRepository.findByArticle(id).orElseThrow(() -> new ResourceNotFoundException("Error: Product Not Found"));
+        save(new OrderRequest(product.getDescription(), product.getColor(), product.getMaterial(),
+                product.getNumber_of_pieces_in_a_package(), product.getCountry_of_origin(),
+                product.getBrand().getName(), product.getModel().getName(), product.getGuarantee_period())
+        );
+        return (new MessageResponse("order registered successfully!"));
+    }
+
+
+    public List<Order> findAllOrdersBySpecification(Map<String, String> values) {
+        return orderRepository.findAll(Specification
+                .where(new OrderWithBrandName(values.get("brand")))
+                .and(new OrderWithCityName(values.get("city")))
+        );
     }
 
 }

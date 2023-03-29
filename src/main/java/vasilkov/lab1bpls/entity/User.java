@@ -20,7 +20,6 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 @Entity
-@ToString
 @Table(name = "_user")
 public class User implements UserDetails {
 
@@ -48,10 +47,8 @@ public class User implements UserDetails {
 
 
     @OneToMany(mappedBy = "id", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @ToString.Exclude
     private Set<Order> orders = new HashSet<>();
 
-    @ToString.Exclude
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
@@ -89,5 +86,9 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public String toString() {
+        return "User( " + "firstname=" + this.getFirstname() + ", lastname=" + this.getLastname() + ", email=" + this.getEmail() + ", role=" + this.getRole() + ")";
     }
 }

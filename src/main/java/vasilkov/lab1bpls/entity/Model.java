@@ -6,7 +6,7 @@ import lombok.*;
 
 import java.util.Set;
 
-@Data
+
 @Builder
 @NoArgsConstructor
 @Getter
@@ -36,5 +36,6 @@ public class Model {
     @JsonIgnore
     @ToString.Exclude
     private Set<Order> orders;
+
 
 }

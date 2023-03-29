@@ -27,7 +27,8 @@ public class SecurityConfiguration {
                 .csrf()
                 .disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/v1/product/add").hasAuthority("ROLE_USER")
+                //todo api
+                .requestMatchers("/api/v1/order/**").hasAuthority("ROLE_USER")
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .anyRequest().authenticated()
                 .and()

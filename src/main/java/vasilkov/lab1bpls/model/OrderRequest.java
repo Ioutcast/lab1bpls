@@ -24,7 +24,6 @@ public class OrderRequest implements Serializable {
     @NotNull(message = "country_of_origin не должен быть пустым!")
     private final String country_of_origin;
 
-
     @NotBlank(message = "Brand не должен быть пустым!")
     private final String brandName;
 

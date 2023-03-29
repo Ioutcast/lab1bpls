@@ -7,7 +7,7 @@ import lombok.*;
 import javax.validation.constraints.NotBlank;
 import java.util.Set;
 
-@Data
+
 @Builder
 @NoArgsConstructor
 @Getter
@@ -37,5 +37,6 @@ public class Brand {
     @JsonIgnore
     @ToString.Exclude
     private Set<Order> orders;
+
 
 }
