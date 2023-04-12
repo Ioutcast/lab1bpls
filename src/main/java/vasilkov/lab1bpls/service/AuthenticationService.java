@@ -1,5 +1,6 @@
 package vasilkov.lab1bpls.service;
 
+import jakarta.persistence.PersistenceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +11,8 @@ import vasilkov.lab1bpls.entity.Role;
 import vasilkov.lab1bpls.entity.Token;
 import vasilkov.lab1bpls.entity.TokenType;
 import vasilkov.lab1bpls.entity.User;
+import vasilkov.lab1bpls.exception.MyPSQLException;
+import vasilkov.lab1bpls.exception.ResourceNotFoundException;
 import vasilkov.lab1bpls.model.AuthenticationRequest;
 import vasilkov.lab1bpls.model.AuthenticationResponse;
 import vasilkov.lab1bpls.model.RegisterRequest;
@@ -17,6 +20,7 @@ import vasilkov.lab1bpls.repository.TokenRepository;
 import vasilkov.lab1bpls.repository.UserRepository;
 import vasilkov.lab1bpls.security.JwtService;
 
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,21 +28,33 @@ import java.util.stream.Collectors;
 public class AuthenticationService {
 
     private final UserRepository repository;
+
     private final PasswordEncoder passwordEncoder;
+
     private final JwtService jwtService;
+
     private final AuthenticationManager authenticationManager;
+
     private final TokenRepository tokenRepository;
 
 
     public void register(RegisterRequest request) {
-        var user = User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ROLE_USER)
-                .build();
-        repository.save(user);
+        try {
+            var user = User.builder()
+                    .firstname(request.getFirstname())
+                    .lastname(request.getLastname())
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .role(Role.ROLE_USER)
+                    .build();
+            repository.save(user);
+        } catch (Exception ex) {
+            if (ex.getCause() instanceof SQLException)
+                throw new MyPSQLException("PSQLException");
+            if (ex.getCause() instanceof PersistenceException)
+                throw new MyPSQLException("MyConstraintViolationException");
+        }
+
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -49,7 +65,7 @@ public class AuthenticationService {
                 )
         );
         var user = repository.findByEmail(request.getEmail())
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("Error: user Not Found"));
 
         var jwtToken = jwtService.generateToken(user);
         revokeAllUserTokens(user);

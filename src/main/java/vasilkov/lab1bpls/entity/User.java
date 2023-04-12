@@ -1,6 +1,7 @@
 package vasilkov.lab1bpls.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -34,6 +35,7 @@ public class User implements UserDetails {
     private String lastname;
 
     @NotBlank
+    @Email
     @Column(name = "email", unique = true)
     private String email;
 

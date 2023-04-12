@@ -1,58 +1,47 @@
 package vasilkov.lab1bpls.controller;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import vasilkov.lab1bpls.entity.Order;
 import vasilkov.lab1bpls.model.OrderRequest;
-import vasilkov.lab1bpls.repository.OrderRepository;
 import vasilkov.lab1bpls.service.OrderService;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/order")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "403", description = "Bad request")
+})
 public class OrderController {
 
     private final OrderService orderService;
 
-    private final OrderRepository orderRepository;
-
-    @PutMapping("/add")
+    @PostMapping()
     public ResponseEntity<?> addNewOrder(@Valid @RequestBody OrderRequest orderRequestModel) {
         return ResponseEntity.ok(orderService.save(orderRequestModel));
     }
 
-    @PutMapping("/add-to-order/{id}")
-    public ResponseEntity<?> addNewOrder1(@Valid @PathVariable Integer id) {
+    @PostMapping("/product/{id}")
+    public ResponseEntity<?> addNewOrderWithId(@Valid @PathVariable Integer id) {
         return ResponseEntity.ok(orderService.findAndSave(id));
     }
 
+    @GetMapping()
+    public ResponseEntity<?> getUserOrder(@RequestParam(required = false) Map<String, String> values) {
 
-    @GetMapping(value = "/my")
-    public ResponseEntity<?> getUserOrder() {
-        //todo перенести в сервис
-        Optional<List<Order>> ordersList = orderRepository.findAllByUserEmail(getCurrentEmail());
+        if (values.isEmpty())
+            return orderService.findOrdersList();
 
-        if (ordersList.isEmpty())
-            return ResponseEntity.ok("You haven't any orders yet");
-
-        return ResponseEntity.ok(ordersList);
-    }
-
-    private String getCurrentEmail() {
-        return ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-    }
-
-    @GetMapping(value = "/get")
-    public ResponseEntity<?> searchOrdersWithParam(@RequestParam Map<String, String> values) {
         List<Order> orders = orderService.findAllOrdersBySpecification(values);
+        System.out.println(orders);
         return ResponseEntity.ok(orders);
+
     }
 }

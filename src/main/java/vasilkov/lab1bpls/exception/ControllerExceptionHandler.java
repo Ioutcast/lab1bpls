@@ -14,27 +14,49 @@ public class ControllerExceptionHandler {
     @ExceptionHandler(value = {ResourceNotFoundException.class})
     public ResponseEntity<ErrorMessage> resourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
 
-        ErrorMessage message2 = new ErrorMessage(
+        ErrorMessage message = new ErrorMessage(
                 HttpStatus.NOT_FOUND.value(),
                 new Date(),
                 "ExpiredJwtException",
                 request.getDescription(false)
         );
-        return new ResponseEntity<ErrorMessage>(message2, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<ErrorMessage>(message, HttpStatus.NOT_FOUND);
     }
 
-    //todo
-//    @ExceptionHandler(value = {ExpiredJwtException.class})
-//    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-//    public  ResponseEntity<ErrorMessage>  resourceNotFoundException(ExpiredJwtException ex, WebRequest request) {
-//
-//        ErrorMessage message2 = new ErrorMessage(
-//                HttpStatus.NOT_FOUND.value(),
-//                new Date(),
-//                "ExpiredJwtException",
-//                request.getDescription(false)
-//        );
-//
-//        return new ResponseEntity<ErrorMessage>( message2, HttpStatus.NOT_FOUND);
-//    }
+    @ExceptionHandler(value = {ResourceIsNotValidException.class})
+    public ResponseEntity<ErrorMessage> resourceIsNotValidException(ResourceIsNotValidException ex, WebRequest request) {
+
+        ErrorMessage message = new ErrorMessage(
+                HttpStatus.NOT_FOUND.value(),
+                new Date(),
+                "resourceIsNotValidException",
+                request.getDescription(false)
+        );
+        return new ResponseEntity<ErrorMessage>(message, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = {MyPSQLException.class})
+    public ResponseEntity<ErrorMessage> myPSQLException(MyPSQLException ex, WebRequest request) {
+
+        ErrorMessage message = new ErrorMessage(
+                HttpStatus.NOT_FOUND.value(),
+                new Date(),
+                "PSQLException",
+                request.getDescription(false)
+        );
+        return new ResponseEntity<ErrorMessage>(message, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = {MyConstraintViolationException.class})
+    public ResponseEntity<ErrorMessage> myConstraintViolationException(MyConstraintViolationException ex, WebRequest request) {
+
+        ErrorMessage message = new ErrorMessage(
+                HttpStatus.NOT_FOUND.value(),
+                new Date(),
+                "MyConstraintViolationException",
+                request.getDescription(false)
+        );
+        return new ResponseEntity<ErrorMessage>(message, HttpStatus.NOT_FOUND);
+    }
+//todo MethodArgumentTypeMismatchException
 }

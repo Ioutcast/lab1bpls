@@ -1,7 +1,9 @@
 package vasilkov.lab1bpls.service;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import vasilkov.lab1bpls.entity.Model;
 import vasilkov.lab1bpls.entity.Order;
 import vasilkov.lab1bpls.entity.Product;
 import vasilkov.lab1bpls.entity.User;
+import vasilkov.lab1bpls.exception.ResourceIsNotValidException;
 import vasilkov.lab1bpls.exception.ResourceNotFoundException;
 import vasilkov.lab1bpls.model.MessageResponse;
 import vasilkov.lab1bpls.model.OrderRequest;
@@ -18,6 +21,7 @@ import vasilkov.lab1bpls.specifications.OrderWithCityName;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -32,15 +36,12 @@ public class OrderService {
 
     public MessageResponse save(OrderRequest orderRequestModel) {
         Order order = new Order();
-        if (orderRequestModel.getDescription() != null) order.setDescription(orderRequestModel.getDescription());
-        if (orderRequestModel.getColor() != null) order.setColor(orderRequestModel.getColor());
-        if (orderRequestModel.getMaterial() != null) order.setMaterial(orderRequestModel.getMaterial());
-        if (orderRequestModel.getCountry_of_origin() != null)
-            order.setCountry_of_origin(orderRequestModel.getCountry_of_origin());
-        if (orderRequestModel.getNumber_of_pieces_in_a_package() != null)
-            order.setNumber_of_pieces_in_a_package(orderRequestModel.getNumber_of_pieces_in_a_package());
-        if (orderRequestModel.getGuarantee_period() != null)
-            order.setGuarantee_period(orderRequestModel.getGuarantee_period());
+        order.setDescription(orderRequestModel.getDescription());
+        order.setColor(orderRequestModel.getColor());
+        order.setMaterial(orderRequestModel.getMaterial());
+        order.setCountry_of_origin(orderRequestModel.getCountry_of_origin());
+        order.setNumber_of_pieces_in_a_package(orderRequestModel.getNumber_of_pieces_in_a_package());
+        order.setGuarantee_period(orderRequestModel.getGuarantee_period());
         order.setBrand(brandRepository.findBrandByName(orderRequestModel.getBrandName())
                 .orElseThrow(() -> new ResourceNotFoundException("Error: Brand Not Found")));
 
@@ -65,7 +66,6 @@ public class OrderService {
     }
 
     public MessageResponse findAndSave(Integer id) {
-        //todo переписать
         Product product = productRepository.findByArticle(id).orElseThrow(() -> new ResourceNotFoundException("Error: Product Not Found"));
         save(new OrderRequest(product.getDescription(), product.getColor(), product.getMaterial(),
                 product.getNumber_of_pieces_in_a_package(), product.getCountry_of_origin(),
@@ -76,11 +76,22 @@ public class OrderService {
 
 
     public List<Order> findAllOrdersBySpecification(Map<String, String> values) {
+        if (values.get("page") == null || values.get("size") == null ||
+                Integer.parseInt(values.get("page")) < 0 || Integer.parseInt(values.get("size")) <= 0)
+            throw new ResourceIsNotValidException("Error: page and size are necessarily and must be positive");
         return orderRepository.findAll(Specification
-                .where(new OrderWithBrandName(values.get("brand")))
-                .and(new OrderWithCityName(values.get("city")))
-        );
+                        .where(new OrderWithBrandName(values.get("brand")))
+                        .and(new OrderWithCityName(values.get("city"))),
+                PageRequest.of(Integer.parseInt(values.get("page")),
+                        Integer.parseInt(values.get("size")))).toList();
     }
 
-}
+    public ResponseEntity<?> findOrdersList() {
+        Optional<List<Order>> ordersList = orderRepository.findAllByUserEmail(
+                ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername());
 
+        if (ordersList.isEmpty()) return ResponseEntity.ok(new MessageResponse("You haven't any orders yet"));
+
+        return ResponseEntity.ok(ordersList);
+    }
+}
